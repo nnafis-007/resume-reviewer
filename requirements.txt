@@ -4,4 +4,6 @@ opencv-python-headless
 easyocr
 openai
 python-dotenv
-dotenv
+fastapi
+uvicorn
+python-multipart

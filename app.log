@@ -1,0 +1,8 @@
+2026-01-09 10:18:04,817 - api - INFO - Received file upload: Nafis_Nahian_Resume.pdf, Content-Type: application/pdf
+2026-01-09 10:18:04,818 - api - INFO - Saved upload to temporary path: /tmp/tmp1yr2oihe.pdf
+2026-01-09 10:18:04,819 - services.resume_service - INFO - Starting resume review for file: /tmp/tmp1yr2oihe.pdf
+2026-01-09 10:18:04,957 - services.resume_service - INFO - Successfully converted PDF to 1 images
+2026-01-09 10:18:04,997 - services.resume_service - INFO - Sending payload to Multimodal LLM via OpenRouter...
+2026-01-09 10:18:14,462 - httpx - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-01-09 10:18:32,084 - services.resume_service - INFO - Successfully received review from LLM
+2026-01-09 10:18:32,091 - api - INFO - Cleaned up temporary file: /tmp/tmp1yr2oihe.pdf
