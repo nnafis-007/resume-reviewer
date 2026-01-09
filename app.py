@@ -4,6 +4,8 @@ import tempfile
 import logging
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import Counter, Histogram
 
 from services.resume_service import ResumeReviewService
 
@@ -18,12 +20,27 @@ logging.basicConfig(
 )
 logger = logging.getLogger("api")
 
+# Metrics
+UPLOADED_FILE_SIZE = Histogram(
+    "uploaded_file_size_bytes",
+    "Size of uploaded resume files in bytes",
+    buckets=[100_000, 500_000, 1_000_000, 2_000_000, 5_000_000]
+)
+RESUME_REVIEWS_TOTAL = Counter(
+    "resume_reviews_total",
+    "Total number of resume reviews processed",
+    ["status"]
+)
+
 # 2. Initialize App
 app = FastAPI(
     title="Resume Reviewer API",
     description="Multimodal AI Backend for Resume Reviews",
     version="1.0.0"
 )
+
+# Instrument the app
+Instrumentator().instrument(app).expose(app)
 
 # 3. Initialize Service
 try:
@@ -57,14 +74,21 @@ async def review_resume(
 
     # Validation
     if file.content_type != "application/pdf":
+        RESUME_REVIEWS_TOTAL.labels(status="failed_type").inc()
         raise HTTPException(status_code=400, detail="Invalid file type. Only PDF is supported.")
     
     # 5MB limit
-    # MAX_FILE_SIZE = 5 * 1024 * 1024
-    # if file.size and file.size > MAX_FILE_SIZE:
-    #     raise HTTPException(status_code=413, detail="File too large. Maximum size is 5MB.")
+    MAX_FILE_SIZE = 5 * 1024 * 1024
+    if file.size and file.size > MAX_FILE_SIZE:
+        RESUME_REVIEWS_TOTAL.labels(status="failed_size").inc()
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 5MB.")
+    
+    # Record file size
+    if file.size:
+        UPLOADED_FILE_SIZE.observe(file.size)
 
     if not resume_service:
+        RESUME_REVIEWS_TOTAL.labels(status="failed_service").inc()
         raise HTTPException(status_code=503, detail="Service not initialized properly.")
 
     # Save to temp file
@@ -86,6 +110,7 @@ async def review_resume(
         # Schedule cleanup
         background_tasks.add_task(cleanup_temp_file, tmp_path)
         
+        RESUME_REVIEWS_TOTAL.labels(status="success").inc()
         return {
             "filename": file.filename,
             "review": review_result
@@ -95,6 +120,7 @@ async def review_resume(
         # Ensure cleanup happens even on error
         background_tasks.add_task(cleanup_temp_file, tmp_path)
         logger.error(f"Processing error: {e}")
+        RESUME_REVIEWS_TOTAL.labels(status="failed_processing").inc()
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

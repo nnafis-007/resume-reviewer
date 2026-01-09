@@ -8,9 +8,17 @@ from typing import Optional
 from pdf2image import convert_from_path
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
+from prometheus_client import Histogram
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
+
+# Metrics
+RESUME_PROCESSING_TIME = Histogram(
+    "resume_processing_seconds", 
+    "Time spent converting PDF and querying LLM",
+    buckets=[1, 5, 10, 20, 30, 60, 90, 120]
+)
 
 class ResumeReviewService:
     def __init__(self):
@@ -39,16 +47,18 @@ class ResumeReviewService:
         """
         Converts PDF pages to images and sends them to a multimodal LLM for review.
         """
-        logger.info(f"Starting resume review for file: {pdf_path}")
-        
-        try:
-            # Run blocking CPU/IO operation (PDF conversion) in a separate thread
-            # convert_from_path spawns subprocess or does heavy IO, blocking the event loop
-            images = await asyncio.to_thread(convert_from_path, pdf_path)
-            logger.info(f"Successfully converted PDF to {len(images)} images")
-        except Exception as e:
-            logger.error(f"Error converting PDF to images: {str(e)}")
-            raise e
+        # Start timer for Prometheus metric
+        with RESUME_PROCESSING_TIME.time():
+            logger.info(f"Starting resume review for file: {pdf_path}")
+            
+            try:
+                # Run blocking CPU/IO operation (PDF conversion) in a separate thread
+                # convert_from_path spawns subprocess or does heavy IO, blocking the event loop
+                images = await asyncio.to_thread(convert_from_path, pdf_path)
+                logger.info(f"Successfully converted PDF to {len(images)} images")
+            except Exception as e:
+                logger.error(f"Error converting PDF to images: {str(e)}")
+                raise e
 
         # Prepare user content with text + images
         content_payload = [
