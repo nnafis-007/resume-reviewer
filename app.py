@@ -59,6 +59,11 @@ async def review_resume(
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Invalid file type. Only PDF is supported.")
     
+    # 5MB limit
+    # MAX_FILE_SIZE = 5 * 1024 * 1024
+    # if file.size and file.size > MAX_FILE_SIZE:
+    #     raise HTTPException(status_code=413, detail="File too large. Maximum size is 5MB.")
+
     if not resume_service:
         raise HTTPException(status_code=503, detail="Service not initialized properly.")
 
@@ -75,7 +80,8 @@ async def review_resume(
 
     # Process
     try:
-        review_result = resume_service.review_resume(tmp_path)
+        # Service is now async to prevent blocking loop during network calls/PDF processing
+        review_result = await resume_service.review_resume(tmp_path)
         
         # Schedule cleanup
         background_tasks.add_task(cleanup_temp_file, tmp_path)

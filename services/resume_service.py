@@ -1,11 +1,12 @@
 import base64
 import os
 import logging
+import asyncio
 from io import BytesIO
 from typing import Optional
 
 from pdf2image import convert_from_path
-from openai import OpenAI
+from openai import AsyncOpenAI
 from dotenv import load_dotenv
 
 # Configure logger for this module
@@ -21,7 +22,7 @@ class ResumeReviewService:
             logger.error("OPENROUTER_API_KEY not found in environment variables.")
             raise ValueError("API Key not configured")
 
-        self.client = OpenAI(
+        self.client = AsyncOpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=self.api_key,
         )
@@ -34,16 +35,16 @@ class ResumeReviewService:
         image.save(buffered, format="JPEG")
         return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-    def review_resume(self, pdf_path: str) -> Optional[str]:
+    async def review_resume(self, pdf_path: str) -> Optional[str]:
         """
         Converts PDF pages to images and sends them to a multimodal LLM for review.
         """
         logger.info(f"Starting resume review for file: {pdf_path}")
         
         try:
-            # Convert PDF to images
-            # poppler_path can be added to convert_from_path if needed on specific OS
-            images = convert_from_path(pdf_path)
+            # Run blocking CPU/IO operation (PDF conversion) in a separate thread
+            # convert_from_path spawns subprocess or does heavy IO, blocking the event loop
+            images = await asyncio.to_thread(convert_from_path, pdf_path)
             logger.info(f"Successfully converted PDF to {len(images)} images")
         except Exception as e:
             logger.error(f"Error converting PDF to images: {str(e)}")
@@ -101,7 +102,7 @@ class ResumeReviewService:
 
         logger.info("Sending payload to Multimodal LLM via OpenRouter...")
         try:
-            completion = self.client.chat.completions.create(
+            completion = await self.client.chat.completions.create(
                 model=self.model_name,
                 messages=[
                     {"role": "system", "content": system_prompt},

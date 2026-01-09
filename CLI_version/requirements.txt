@@ -1,0 +1,6 @@
+pymupdf
+pdf2image
+opencv-python-headless
+easyocr
+openai
+python-dotenv
