@@ -1,6 +1,7 @@
 import sys
 import os
 from utils import get_resume_text
+from reviewer import review_resume
 
 def main():
     if len(sys.argv) < 2:
@@ -23,6 +24,14 @@ def main():
         print(extracted_text)
         print("="*50)
         print(f"\nTotal characters extracted: {len(extracted_text)}")
+
+        print("\n" + "="*50)
+        print("GENERATING LLM REVIEW...")
+        print("="*50)
+        
+        review = review_resume(extracted_text)
+        print(review)
+
     else:
         print("Failed to extract any text from the provided PDF.")
 

@@ -15,7 +15,15 @@ def extract_text_standard(pdf_path):
         doc = fitz.open(pdf_path)
         full_text = ""
         for page in doc:
-            full_text += page.get_text("text") + "\n"
+            # "blocks" output preserves structure text better (x0, y0, x1, y1, "text", block_no, block_type)
+            blocks = page.get_text("blocks")
+            # Sort blocks by vertical position, then horizontal
+            blocks.sort(key=lambda b: (b[1], b[0]))
+            
+            for block in blocks:
+                # blocks[4] is the text content
+                full_text += block[4] + "\n"
+                
         doc.close()
         
         cleaned_text = clean_text(full_text)
@@ -38,8 +46,11 @@ def extract_text_ocr(pdf_path):
             open_cv_image = np.array(image)
             open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)
             gray = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
-            results = reader.readtext(gray, detail=0)
-            full_text += " ".join(results) + "\n"
+            
+            # paragraph=True combines spatially close text into paragraphs
+            results = reader.readtext(gray, detail=0, paragraph=True)
+            # Join with double newlines to separate distinct text blocks/paragraphs
+            full_text += "\n\n".join(results) + "\n\n"
             
         return clean_text(full_text)
     except Exception as e:
