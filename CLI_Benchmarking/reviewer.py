@@ -1,6 +1,7 @@
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+import timeit
 
 
 def review_resume(resume_text):
@@ -11,10 +12,9 @@ def review_resume(resume_text):
 
     # Placeholder credentials
     API_KEY = os.environ.get("OPENROUTER_API_KEY")
-    MODEL_NAME = "meta-llama/llama-3.3-70b-instruct:free" # e.g., "openai/gpt-4o" or "anthropic/claude-3-opus"
+    MODEL_NAME = "google/gemma-3-27b-it" 
     
-    # If using OpenRouter, the base_url is usually "https://openrouter.ai/api/v1"
-    # If using direct OpenAI, remove base_url and use the default.
+    # the base_url is usually "https://openrouter.ai/api/v1"
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=API_KEY,
@@ -75,6 +75,7 @@ def review_resume(resume_text):
     user_message = f"Here is the resume text extracted from a PDF:\n\n{resume_text}"
 
     try:
+        start_time = timeit.default_timer()
         completion = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
@@ -82,6 +83,8 @@ def review_resume(resume_text):
                 {"role": "user", "content": user_message}
             ]
         )
+        end_time = timeit.default_timer()
+        print(f"{MODEL_NAME} LLM review completed in {end_time - start_time:.2f} seconds")
         return completion.choices[0].message.content
     except Exception as e:
         return f"Error connecting to LLM: {str(e)}"

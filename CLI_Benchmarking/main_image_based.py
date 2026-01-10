@@ -5,6 +5,7 @@ from io import BytesIO
 from pdf2image import convert_from_path
 from openai import OpenAI
 from dotenv import load_dotenv
+import timeit
 
 def encode_image(image):
     """
@@ -39,7 +40,10 @@ def review_resume_multimodal(pdf_path):
     print(f"Converting PDF to images for analysis: {pdf_path}...")
     try:
         # Convert PDF to images
+        start_time = timeit.default_timer()
         images = convert_from_path(pdf_path)
+        end_time = timeit.default_timer()
+        print(f"Converted PDF to {len(images)} images in {end_time - start_time:.2f} seconds")
     except Exception as e:
         print(f"Error converting PDF: {e}")
         return
@@ -49,8 +53,8 @@ def review_resume_multimodal(pdf_path):
         {"type": "text", "text": "Please review the attached resume. Focus on visual layout, formatting, and content."}
     ]
 
-    # Add images to payload (Cap at first 2 pages to save tokens/context window if needed)
-    for i, img in enumerate(images[:2]): 
+    # Add images to payload
+    for i, img in enumerate(images[:]): 
         base64_image = encode_image(img)
         content_payload.append({
             "type": "image_url",
@@ -93,6 +97,7 @@ def review_resume_multimodal(pdf_path):
 
     print("Sending data to Multimodal LLM...")
     try:
+        start_time = timeit.default_timer()
         completion = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
@@ -100,6 +105,8 @@ def review_resume_multimodal(pdf_path):
                 {"role": "user", "content": content_payload}
             ]
         )
+        end_time = timeit.default_timer()
+        print(f"Multimodal LLM review completed in {end_time - start_time:.2f} seconds")
         print("\n" + "="*50)
         print("MULTIMODAL RESUME REVIEW")
         print("="*50)

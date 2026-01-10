@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 import re
 import os
+import timeit
 
 def extract_text_standard(pdf_path):
     """
@@ -12,6 +13,7 @@ def extract_text_standard(pdf_path):
     Returns extracted text if found, else None.
     """
     try:
+        start_time = timeit.default_timer()
         doc = fitz.open(pdf_path)
         full_text = ""
         for page in doc:
@@ -22,7 +24,10 @@ def extract_text_standard(pdf_path):
             
             for block in blocks:
                 # blocks[4] is the text content
-                full_text += block[4] + "\n"
+                full_text += block[4] + "\n"\
+        
+        end_time = timeit.default_timer()
+        print(f"Standard extraction completed in {end_time - start_time:.2f} seconds")
                 
         doc.close()
         
@@ -37,6 +42,9 @@ def extract_text_ocr(pdf_path):
     OCR extraction using EasyOCR as fallback.
     """
     try:
+        # Report Time taken for OCR
+        start_time = timeit.default_timer()
+
         # Full OCR Fallback
         images = pdf2image.convert_from_path(pdf_path)
         reader = easyocr.Reader(['en'], gpu=False)
@@ -51,6 +59,9 @@ def extract_text_ocr(pdf_path):
             results = reader.readtext(gray, detail=0, paragraph=True)
             # Join with double newlines to separate distinct text blocks/paragraphs
             full_text += "\n\n".join(results) + "\n\n"
+        
+        end_time = timeit.default_timer()
+        print(f"OCR extraction completed in {end_time - start_time:.2f} seconds")
             
         return clean_text(full_text)
     except Exception as e:
