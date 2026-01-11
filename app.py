@@ -31,6 +31,11 @@ RESUME_REVIEWS_TOTAL = Counter(
     "Total number of resume reviews processed",
     ["status"]
 )
+REVIEW_GENERATION_TIME = Histogram(
+    "review_generation_seconds",
+    "Time spent generating the resume review",
+    buckets=[1, 5, 10, 20, 30, 45, 60, 90, 120]
+)
 
 # 2. Initialize App
 app = FastAPI(
@@ -105,7 +110,8 @@ async def review_resume(
     # Process
     try:
         # Service is now async to prevent blocking loop during network calls/PDF processing
-        review_result = await resume_service.review_resume(tmp_path)
+        with REVIEW_GENERATION_TIME.time():
+            review_result = await resume_service.review_resume(tmp_path)
         
         # Schedule cleanup
         background_tasks.add_task(cleanup_temp_file, tmp_path)
