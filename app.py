@@ -86,6 +86,7 @@ async def review_resume(
     MAX_FILE_SIZE = 5 * 1024 * 1024
     if file.size and file.size > MAX_FILE_SIZE:
         RESUME_REVIEWS_TOTAL.labels(status="failed_size").inc()
+        logger.error(f"File too large: {file.size} bytes. Maximum size is 5MB.")
         raise HTTPException(status_code=413, detail="File too large. Maximum size is 5MB.")
     
     # Record file size
@@ -94,6 +95,7 @@ async def review_resume(
 
     if not resume_service:
         RESUME_REVIEWS_TOTAL.labels(status="failed_service").inc()
+        logger.error("Service not initialized properly.")
         raise HTTPException(status_code=503, detail="Service not initialized properly.")
 
     # Save to temp file

@@ -5,7 +5,7 @@ import os
 
 # Page Config
 st.set_page_config(
-    page_title="ResumeAI - Elite Career Critique",
+    page_title="SeeV - Elite Career Critique",
     page_icon="🚀",
     layout="centered"
 )
@@ -51,7 +51,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Application Header
-st.title("ResumeAI 🚀")
+st.title("SeeV 🚀")
 st.markdown('<p class="subtitle">Turn your resume into an interview magnet with executive-level AI analysis.</p>', unsafe_allow_html=True)
 
 # Backend URL Configuration
@@ -64,7 +64,7 @@ uploaded_file = st.file_uploader("Upload your Resume (PDF)", type="pdf", help="U
 
 if uploaded_file is not None:
     # Submit Button
-    if st.button("Generate Professional Review"):
+    if st.button("Get a Professional Review"):
         
         # Loading State
         progress_text = "Analyzing document structure..."
