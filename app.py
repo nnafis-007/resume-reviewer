@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from prometheus_client import Counter, Histogram
 
-from services.resume_service import ResumeReviewService
+from services.resume_service import ResumeReviewService, InvalidResumeError, INVALID_RESUME_SENTINEL
 
 # 1. Logging Configuration
 logging.basicConfig(
@@ -19,6 +19,23 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("api")
+
+
+class _DropMetricsAccessLogsFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        # Uvicorn access logs usually include extra fields.
+        request_line = getattr(record, "request_line", None)
+        if isinstance(request_line, str) and "GET /metrics" in request_line:
+            return False
+
+        try:
+            msg = record.getMessage()
+        except Exception:
+            return True
+
+        if "GET /metrics" in msg:
+            return False
+        return True
 
 # Metrics
 UPLOADED_FILE_SIZE = Histogram(
@@ -43,6 +60,26 @@ app = FastAPI(
     description="Multimodal AI Backend for Resume Reviews",
     version="1.0.0"
 )
+
+
+@app.on_event("startup")
+async def _configure_logging_filters():
+    """Re-apply filters after uvicorn/gunicorn logging configuration."""
+    access_filter = _DropMetricsAccessLogsFilter()
+
+    root_logger = logging.getLogger()
+    root_logger.addFilter(access_filter)
+    for handler in list(getattr(root_logger, "handlers", [])):
+        handler.addFilter(access_filter)
+
+    for logger_name in ("uvicorn.access", "gunicorn.access"):
+        access_logger = logging.getLogger(logger_name)
+        access_logger.addFilter(access_filter)
+
+        # In some setups, dictConfig resets logger filters.
+        # Ensure handlers also have the filter.
+        for handler in list(getattr(access_logger, "handlers", [])):
+            handler.addFilter(access_filter)
 
 # Instrument the app
 Instrumentator().instrument(app).expose(app)
@@ -124,6 +161,15 @@ async def review_resume(
             "review": review_result
         }
         
+    except InvalidResumeError as e:
+        background_tasks.add_task(cleanup_temp_file, tmp_path)
+        logger.error(f"Invalid resume upload rejected: {e}")
+        RESUME_REVIEWS_TOTAL.labels(status="invalid_resume").inc()
+        raise HTTPException(
+            status_code=422,
+            detail=INVALID_RESUME_SENTINEL,
+        )
+
     except Exception as e:
         # Ensure cleanup happens even on error
         background_tasks.add_task(cleanup_temp_file, tmp_path)

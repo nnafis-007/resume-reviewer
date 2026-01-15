@@ -3,6 +3,11 @@ import os
 from dotenv import load_dotenv
 import timeit
 
+from invalid_resume_detector import (
+    INVALID_RESUME_SENTINEL,
+    is_invalid_resume_response,
+)
+
 
 def review_resume(resume_text):
     """
@@ -20,9 +25,15 @@ def review_resume(resume_text):
         api_key=API_KEY,
     )
 
-    system_prompt = """
+    system_prompt = f"""
     You are an expert Senior Technical Recruiter and ATS (Applicant Tracking System) Optimization Specialist.
     You are reviewing the **raw text extracted from a resume PDF**. 
+
+    HARD RULE (must follow exactly):
+    If the provided text is NOT a resume (examples: documentation, command reference, technical manual, random notes, blank/garbled text), respond with EXACTLY this and nothing else:
+    ```{INVALID_RESUME_SENTINEL}```
+
+    If you output the invalid message, do NOT include headings, scores, bullet points, analysis, or any other text.
     
     **IMPORTANT**: Since you are processing raw text, do NOT comment on visual formatting like fonts, margins, colors, or columns. 
     Instead, focus entirely on the **content**, the **logical order of sections**, and the **narrative structure**.
@@ -85,6 +96,9 @@ def review_resume(resume_text):
         )
         end_time = timeit.default_timer()
         print(f"{MODEL_NAME} LLM review completed in {end_time - start_time:.2f} seconds")
-        return completion.choices[0].message.content
+        response_text = completion.choices[0].message.content
+        if is_invalid_resume_response(response_text):
+            return f"```{INVALID_RESUME_SENTINEL}```"
+        return response_text
     except Exception as e:
         return f"Error connecting to LLM: {str(e)}"

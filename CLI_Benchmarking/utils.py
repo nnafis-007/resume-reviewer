@@ -24,7 +24,7 @@ def extract_text_standard(pdf_path):
             
             for block in blocks:
                 # blocks[4] is the text content
-                full_text += block[4] + "\n"\
+                full_text += block[4] + "\n"
         
         end_time = timeit.default_timer()
         print(f"Standard extraction completed in {end_time - start_time:.2f} seconds")

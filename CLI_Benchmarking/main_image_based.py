@@ -7,6 +7,11 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import timeit
 
+from invalid_resume_detector import (
+    INVALID_RESUME_SENTINEL,
+    is_invalid_resume_response,
+)
+
 def encode_image(image):
     """
     Encodes a PIL Image to a base64 string.
@@ -63,15 +68,21 @@ def review_resume_multimodal(pdf_path):
             }
         })
 
-    system_prompt = """
-    You are an expert Senior Technical Recruiter and Career Coach accessing this resume through a Multimodal AI vision model.
-    Unlike text-only parsers, you can see the **actual visual layout** of the document.
+    system_prompt = f"""
+    You are an expert Senior Technical Recruiter and Career Coach using a multimodal vision model.
+    You can see the document as an image.
 
-    Your goal is to critique the resume on two fronts: 
-    1. **Visual Presentation & Structure** (Formatting, White Space, Font choice, Consistency).
-    2. **Content & Narrative** (Impact, Metrics, Keywords).
+    **HARD RULE (must follow exactly):
+    If the document is NOT a resume (examples: documentation, command reference, technical manual, invoice, certificate, blank page, garbled/illegible scan, slide deck), respond with EXACTLY this and nothing else:
+    ```{INVALID_RESUME_SENTINEL}```**
 
-    Provide your feedback in the following Markdown structure:
+    If you output the invalid message, do NOT include headings, scores, bullet points, analysis, or any other text.
+
+    Otherwise (if it is a real resume), critique it on:
+    1) Visual Presentation & Structure (formatting, whitespace, font hierarchy, consistency)
+    2) Content & Narrative (impact, metrics, keywords)
+
+    Provide your feedback in this Markdown structure:
 
     ### 1. Visual First Impressions (The 6-Second Scan)
     **Score**: [0-100]
@@ -110,7 +121,13 @@ def review_resume_multimodal(pdf_path):
         print("\n" + "="*50)
         print("MULTIMODAL RESUME REVIEW")
         print("="*50)
-        print(completion.choices[0].message.content)
+        response_text = completion.choices[0].message.content
+
+        if is_invalid_resume_response(response_text):
+            print(f"```{INVALID_RESUME_SENTINEL}```")
+            raise SystemExit(2)
+
+        print(response_text)
     except Exception as e:
         print(f"Error calling LLM: {str(e)}")
 
