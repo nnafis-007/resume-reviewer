@@ -127,7 +127,7 @@ if uploaded_file is not None:
 st.markdown("---")
 st.markdown(
     """<div style='text-align: center; color: #888; font-size: 0.8rem;'>
-    Powered by <strong>Gemma 3 Vision</strong> & <strong>FastAPI</strong>
+    Powered by <strong>Gemma 3 /strong> & <strong>FastAPI</strong>
     </div>""", 
     unsafe_allow_html=True
 )
