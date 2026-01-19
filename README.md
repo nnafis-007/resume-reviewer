@@ -2,12 +2,18 @@
 
 A production-minded resume review system that combines **multimodal AI** (PDF → images + LLM), a **low-latency text-first pipeline** (PDF text extraction → LLM), and a full **DevOps/observability stack** (Prometheus + Grafana + Loki) running via Docker Compose.
 
+**Live Demo :** http://resume-reviewer.koreacentral.cloudapp.azure.com/
 <!-- Demonstrating practical skills across:
 - **AI engineering**: multimodal prompting, latency-driven pipeline design, guardrails (invalid document detection)
 - **Backend engineering**: FastAPI file upload API, async-safe CPU/IO handling, structured error handling
 - **DevOps/observability**: containerized stack, Prometheus metrics, Grafana dashboards, Loki log aggregation
  -->
 ---
+
+<p align="center">
+  <img src="Grafana_dashboard.png" alt="Grafana dashboard" width="49%" height=400px/>
+  <img src="demo_UI.png" alt="Streamlit UI demo" width="49%" height=400px />
+</p>
 
 ## What it does
 
@@ -31,6 +37,34 @@ A production-minded resume review system that combines **multimodal AI** (PDF �
 
 See docker composition in [docker-compose.yml](docker-compose.yml).
 
+---
+
+
+---
+
+## Benchmarking findings (latency tradeoffs)
+
+The [CLI_Benchmarking](CLI_Benchmarking) folder contains scripts used to compare extraction strategies and model latency.
+
+### ⏱️ Key Takeaways: Gemma 3 (27B) vs LLaMA 3.3 (70B)
+
+| # | Extraction Method              | Preprocessing Time (s) | LLM Model                                   | LLM Review Time (s) | Notes |
+|---|--------------------------------|-------------------------|---------------------------------------------|---------------------|-------|
+| 1 | OCR Extraction                 | 46.74                   | llama-3.3-70b-instruct   | 22.10               | ❌ Worst overall latency |
+| 2 | Standard Text Extraction       | 0.02                    | llama-3.3-70b-instruct   | 23.73               | ⚡ Fastest pipeline, poor formatting awareness |
+| 3 | PDF → 1 Image                  | 0.15                    | gemma-3-27b-it                       | 32.39               | Better layout understanding |
+| 4 | PDF → 2 Images                 | 0.34                    | gemma-3-27b-it                            | 34.12               | Higher latency, improved spatial context |
+| 5 | Standard Text Extraction       | 0.01                    | gemma-3-27b-it                       | **18.97**           | 🏆 Fastest LLM inference |
+
+---
+
+
+<!-- Key takeaways from [CLI_Benchmarking/comparison.md](CLI_Benchmarking/comparison.md):
+- **OCR is expensive**: ~46s just to extract text (worst-case)
+- **Standard PDF text extraction is extremely fast**: ~0.01–0.02s
+- **PDF → images is fast** (sub-second conversion), but multimodal LLM calls can be slower than text-only -->
+
+### This is why the backend is designed as **text-first with multimodal fallback**.
 ---
 
 ## AI/ML engineering highlights
@@ -61,33 +95,6 @@ Plus auto-instrumented HTTP metrics via `prometheus-fastapi-instrumentator` and 
 ### Loki centralized logging
 - Promtail scrapes Docker container logs (non-blocking) and ships to Loki
 - Grafana includes dedicated LogQL panels for Info/Debug and Error/Warn streams
-
----
-
-## Benchmarking findings (latency tradeoffs)
-
-The [CLI_Benchmarking](CLI_Benchmarking) folder contains scripts used to compare extraction strategies and model latency.
-
-### ⏱️ Key Takeaways: Gemma 3 (27B) vs LLaMA 3.3 (70B)
-
-| # | Extraction Method              | Preprocessing Time (s) | LLM Model                                   | LLM Review Time (s) | Notes |
-|---|--------------------------------|-------------------------|---------------------------------------------|---------------------|-------|
-| 1 | OCR Extraction                 | 46.74                   | llama-3.3-70b-instruct   | 22.10               | ❌ Worst overall latency |
-| 2 | Standard Text Extraction       | 0.02                    | llama-3.3-70b-instruct   | 23.73               | ⚡ Fastest pipeline, poor formatting awareness |
-| 3 | PDF → 1 Image                  | 0.15                    | gemma-3-27b-it                       | 32.39               | Better layout understanding |
-| 4 | PDF → 2 Images                 | 0.34                    | gemma-3-27b-it                            | 34.12               | Higher latency, improved spatial context |
-| 5 | Standard Text Extraction       | 0.01                    | gemma-3-27b-it                       | **18.97**           | 🏆 Fastest LLM inference |
-
----
-
-
-<!-- Key takeaways from [CLI_Benchmarking/comparison.md](CLI_Benchmarking/comparison.md):
-- **OCR is expensive**: ~46s just to extract text (worst-case)
-- **Standard PDF text extraction is extremely fast**: ~0.01–0.02s
-- **PDF → images is fast** (sub-second conversion), but multimodal LLM calls can be slower than text-only -->
-
-### This is why the backend is designed as **text-first with multimodal fallback**.
-
 ---
 
 ## Quick start (local)
