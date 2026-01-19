@@ -11,8 +11,8 @@ A production-minded resume review system that combines **multimodal AI** (PDF â†
 ---
 
 <p align="center">
-  <img src="Grafana_dashboard.png" alt="Grafana dashboard" width="49%" height=400px/>
-  <img src="demo_UI.png" alt="Streamlit UI demo" width="49%" height=400px />
+  <img src="Grafana_dashboard.png" alt="Grafana dashboard" width="50%%" height=250px/>
+  <img src="demo_UI.png" alt="Streamlit UI demo" width="45%" height=290px />
 </p>
 
 ## What it does
