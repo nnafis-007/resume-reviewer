@@ -73,6 +73,7 @@ if uploaded_file is not None:
         try:
             # Simulate stages for better UX
             loading_messages = [
+                "Sending file for analysis...",
                 "Scanning visual layout and hierarchy...",
                 "Extracting key competencies and metrics...",
                 "Benchmarking against industry standards...",
@@ -114,9 +115,9 @@ if uploaded_file is not None:
                 st.toast("Review generated successfully!", icon="✅")
                 
             elif response.status_code == 413:
-                st.error("File is too large. Please upload a PDF smaller than 5MB.")
+                st.error("ERROR : File is too large. Please upload a PDF smaller than 5MB.")
             else:
-                st.error(f"Error: {response.status_code} - {response.text}")
+                st.error(f"ERROR: {response.status_code} - {response.text}")
                 
         except requests.exceptions.ConnectionError:
             st.error(f"Could not connect to the analysis server at {BACKEND_URL}. Is the backend running?")

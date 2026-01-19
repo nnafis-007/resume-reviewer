@@ -18,7 +18,7 @@ docker compose up -d --build
 
 ## 📊 Grafana Dashboard Features
 
-### Metrics (Left Side & Top)
+### Metrics (Top)
 - **System Uptime** - Server uptime in minutes
 - **CPU Usage** - 5-minute average CPU utilization
 - **Memory Usage** - Current memory consumption
@@ -30,7 +30,7 @@ docker compose up -d --build
 - **Avg Request Duration** - API response time
 - **Latency Percentiles** - p50, p90, p95, p99 latencies
 
-### Logs (Right Side)
+### Logs (Bottom Left And Right)
 - **Application Logs (Info/Debug)** - Normal operation logs
 - **Application Logs (Errors/Warnings)** - Issues and warnings
 
@@ -75,34 +75,6 @@ curl -s "http://localhost:9090/api/v1/query?query=sum(rate(review_generation_sec
 docker compose down
 ```
 
-## 📝 Key LogQL Queries
-
-### In Grafana Explore
-1. All backend logs:
-   ```logql
-   {compose_service="backend"}
-   ```
-
-2. Only errors:
-   ```logql
-   {compose_service=~"backend|frontend"} |~ "ERROR"
-   ```
-
-3. Search for specific text:
-   ```logql
-   {compose_service="backend"} |~ "(?i)resume"
-   ```
-
-4. Exclude health checks:
-   ```logql
-   {compose_service="backend"} !~ "health|metrics"
-   ```
-
-## 📚 Documentation
-
-- `LOKI_IMPLEMENTATION_SUMMARY.md` - Complete implementation details
-- `LOKI_SETUP.md` - Detailed Loki configuration guide
-- `METRICS_IMPLEMENTATION.md` - Prometheus metrics documentation
 
 ## 🐛 Troubleshooting
 
@@ -145,13 +117,6 @@ docker compose restart
 - ✅ Real-time log streaming
 - ✅ 7-day retention
 
-## 💡 Tips
-
-1. **Dashboard Auto-Refresh**: Set to 5 seconds for real-time monitoring
-2. **Log Search**: Use the search box in log panels for quick filtering
-3. **Time Range**: Adjust the time picker (top-right) to view historical data
-4. **Export Logs**: Use Loki API or LogCLI for log exports
-5. **Custom Queries**: Use Grafana's Explore feature to test LogQL queries
 
 ## 🚨 Important Notes
 
