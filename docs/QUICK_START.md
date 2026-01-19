@@ -48,10 +48,7 @@ curl -X POST http://localhost:8000/api/v1/review \
 
 ### 2. View Logs
 ```bash
-# Run the test script
-./test_logging.sh
-
-# Or query directly
+# query directly
 curl -s -G "http://localhost:3100/loki/api/v1/query_range" \
   --data-urlencode 'query={compose_service="backend"}' \
   --data-urlencode 'limit=10' | jq -r '.data.result[0].values[] | .[1]'

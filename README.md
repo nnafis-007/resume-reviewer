@@ -2,11 +2,11 @@
 
 A production-minded resume review system that combines **multimodal AI** (PDF → images + LLM), a **low-latency text-first pipeline** (PDF text extraction → LLM), and a full **DevOps/observability stack** (Prometheus + Grafana + Loki) running via Docker Compose.
 
-This repo is designed to demonstrate practical skills across:
+<!-- Demonstrating practical skills across:
 - **AI engineering**: multimodal prompting, latency-driven pipeline design, guardrails (invalid document detection)
 - **Backend engineering**: FastAPI file upload API, async-safe CPU/IO handling, structured error handling
 - **DevOps/observability**: containerized stack, Prometheus metrics, Grafana dashboards, Loki log aggregation
-
+ -->
 ---
 
 ## What it does
@@ -47,8 +47,7 @@ See docker composition in [docker-compose.yml](docker-compose.yml).
 
 ## DevOps + Observability highlights
 
-### Prometheus metrics
-Custom app metrics are documented in [METRICS_IMPLEMENTATION.md](METRICS_IMPLEMENTATION.md):
+### Prometheus Custom metrics
 - `resume_reviews_total{status=...}` (Counter)
 - `review_generation_seconds` (Histogram)
 - `uploaded_file_size_bytes` (Histogram)
@@ -63,24 +62,13 @@ Plus auto-instrumented HTTP metrics via `prometheus-fastapi-instrumentator` and 
 - Promtail scrapes Docker container logs (non-blocking) and ships to Loki
 - Grafana includes dedicated LogQL panels for Info/Debug and Error/Warn streams
 
-Implementation details: [docs/IMPLEMENTATION_COMPLETE.md](docs/IMPLEMENTATION_COMPLETE.md) and [docs/LOKI_SETUP.md](docs/LOKI_SETUP.md)
-
 ---
 
 ## Benchmarking findings (latency tradeoffs)
 
 The [CLI_Benchmarking](CLI_Benchmarking) folder contains scripts used to compare extraction strategies and model latency.
 
-Key takeaways from [CLI_Benchmarking/comparison.md](CLI_Benchmarking/comparison.md):
-- **OCR is expensive**: ~46s just to extract text (worst-case)
-- **Standard PDF text extraction is extremely fast**: ~0.01–0.02s
-- **PDF → images is fast** (sub-second conversion), but multimodal LLM calls can be slower than text-only
-
-This is why the backend is designed as **text-first with multimodal fallback**.
-
----
-
-### ⏱️ Latency Comparison: Gemma 3 (27B) vs LLaMA 3.3 (70B)
+### ⏱️ Key Takeaways: Gemma 3 (27B) vs LLaMA 3.3 (70B)
 
 | # | Extraction Method              | Preprocessing Time (s) | LLM Model                                   | LLM Review Time (s) | Notes |
 |---|--------------------------------|-------------------------|---------------------------------------------|---------------------|-------|
@@ -89,6 +77,16 @@ This is why the backend is designed as **text-first with multimodal fallback**.
 | 3 | PDF → 1 Image                  | 0.15                    | gemma-3-27b-it                       | 32.39               | Better layout understanding |
 | 4 | PDF → 2 Images                 | 0.34                    | gemma-3-27b-it                            | 34.12               | Higher latency, improved spatial context |
 | 5 | Standard Text Extraction       | 0.01                    | gemma-3-27b-it                       | **18.97**           | 🏆 Fastest LLM inference |
+
+---
+
+
+<!-- Key takeaways from [CLI_Benchmarking/comparison.md](CLI_Benchmarking/comparison.md):
+- **OCR is expensive**: ~46s just to extract text (worst-case)
+- **Standard PDF text extraction is extremely fast**: ~0.01–0.02s
+- **PDF → images is fast** (sub-second conversion), but multimodal LLM calls can be slower than text-only -->
+
+### This is why the backend is designed as **text-first with multimodal fallback**.
 
 ---
 
@@ -113,8 +111,6 @@ docker compose up -d --build
 - Grafana: http://localhost:3000 (admin/admin)
 - Prometheus: http://localhost:9090
 - Loki: http://localhost:3100
-
-More detail: [docs/QUICK_START.md](docs/QUICK_START.md)
 
 ---
 
@@ -156,6 +152,6 @@ This project emphasizes production signals over demos:
 
 ## Next steps
 
-- Turn this into a job recommendation agent using job description and resume contents 
+- Turn this into a **job recommendation agent** using job description and resume contents 
 - Add alerting (Grafana alert rules) for error rate and latency regressions
 - Add persistence volumes for Loki/Prometheus for longer retention
