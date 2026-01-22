@@ -3,6 +3,7 @@
 A production-minded resume review system that combines **multimodal AI** (PDF → images + LLM), a **low-latency text-first pipeline** (PDF text extraction → LLM), and a full **DevOps/observability stack** (Prometheus + Grafana + Loki) running via Docker Compose.
 
 **Live Demo :** http://resume-reviewer.koreacentral.cloudapp.azure.com/
+
 **Grafana Dashboard : http://4.217.252.111:3000/** (admin:admin)
 <!-- Demonstrating practical skills across:
 - **AI engineering**: multimodal prompting, latency-driven pipeline design, guardrails (invalid document detection)
